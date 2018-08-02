@@ -8,7 +8,7 @@ import WorkOrders from './components/workOrders';
 import WorkForm from './components/workForm';
 
 import './index.css';
-import './index.css';
+import './App.css'
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 
