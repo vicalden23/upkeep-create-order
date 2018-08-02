@@ -2,16 +2,19 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { 
 	Button,
-	Radio,
 	FormGroup,
 	ControlLabel,
-	FormControl
+	FormControl,
+	ButtonToolbar,
+	ToggleButtonGroup,
+	ToggleButton
 } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
 import axios from 'axios';
 
-import "react-datepicker/dist/react-datepicker.css";
+import 'react-datepicker/dist/react-datepicker.css';
+import '../App.css'
 
 class WorkForm extends Component {
 	constructor(props) {
@@ -22,38 +25,73 @@ class WorkForm extends Component {
 			title: '',
 			description: '',
 			priority: 0,
-			dueDate: moment()
+			dueDate: '',
+			displayDate: moment()
 		}
 
 		this.handleDateChange = this.handleDateChange.bind(this);
-		this.handleSubmit = this.handleSubmit.bind(this)
+		this.handleTitleChange = this.handleTitleChange.bind(this);
+		this.handleDescription = this.handleDescription.bind(this);
+		this.handleSelectedDate = this.handleSelectedDate.bind(this);
+		this.handleSubmit = this.handleSubmit.bind(this);
+		this.handlePriority = this.handlePriority.bind(this);
 	}
 
+	handleTitleChange() {
+		this.setState({
+			title: this.title.value
+		})
+	}
 
+	handleDescription() {
+		this.setState({
+			description: this.description.value
+		})
+	}
+
+	handlePriority(priority) {
+		this.setState({
+			priority: priority
+		})
+	}
+
+	handleSelectedDate(date) {
+		this.setState({
+			dueDate: new Date(date.format()).getTime()
+		})
+	}
 
 	handleDateChange(date) {
 		this.setState({
-			dueDate: date
+			displayDate: date
 		})
 	}
 
-	handleSubmit() {
-		let headers = {
-			'Session-Token': this.state.sessionToken
-		}
+	handleSubmit(ev) {
+		if (this.state.title) {
+			ev.preventDefault()
+			let data = {
+				title: this.state.title,
+				description: this.state.description,
+				dueDate: this.state.dueDate,
+				priority: this.state.priority
+			}
 
-		let data = {
-			title: this.state.title,
-			description: this.state.description,
-			dueDate: this.state.dueDate,
-			priority: this.state.priority
-		}
+			let options = {
+				method: 'POST',
+				headers: { 'Session-Token': this.state.sessionToken },
+				data: data,
+				url: 'https://api.onupkeep.com/api/v2/work-orders/'
+			}
 
-		axios.post('https://api.onupkeep.com/api/v2/work-orders/', data, {headers})
-		.then((result) => {
-			console.log(result)
-		})
-		.catch((err) => console.log(err))
+			axios(options)
+			.then((result) => {
+				console.log(result)
+			})
+			.catch((err) => {
+				console.log(err)
+			})
+		}
 	}
 
 	componentDidMount() {
@@ -66,49 +104,67 @@ class WorkForm extends Component {
         sessionToken: auth.data.result.sessionToken
       })
     })
-  }
+	}
 
 	render() {
 		return (
-			<div>
-	      <Button>
-	          <Link to='/orders'>
-	            View All Orders
-	          </Link>
-	        </Button>
+			<div className='container'>
+				<div className='title'>
+					<h4>Create A Work Order</h4>
+	        <Link to='/orders' className='link'>
+	          View All Orders
+	        </Link>
+				</div>
 				<form>
 					<FormGroup>
 						<ControlLabel>Title *required</ControlLabel>
-						<FormControl required='true' componentClass='input' />
+						<FormControl 
+							required='true' 
+							componentClass='input'
+							inputRef={input => this.title = input}
+							onChange={this.handleTitleChange}
+						/>
 					</FormGroup>
 					<FormGroup>
 						<ControlLabel>Description</ControlLabel>
-						<FormControl componentClass='textarea' />
+						<FormControl 
+							componentClass='textarea'
+							inputRef={text => this.description = text}
+							onChange={this.handleDescription}
+						/>
 					</FormGroup>
-					<FormGroup>
-						<Radio name='priority' inline>
-							0
-						</Radio>
-						<Radio name='priority' inline>
-							1
-						</Radio>
-						<Radio name='priority' inline>
-							2
-						</Radio>
-						<Radio name='priority' inline>
-							3
-						</Radio>
-					</FormGroup>
-					<DatePicker
-						selected={this.state.dueDate}
-				    onChange={this.handleDateChange}
-					/>
 
-					<Button 
-						type='submit'
-						onClick={this.handleSubmit}> 
-						Submit 
-					</Button>
+					<div className='group'>
+						<ControlLabel>Priority</ControlLabel>
+						<ButtonToolbar>
+						  <ToggleButtonGroup type='radio' name='priority' defaultValue={0}
+						  	onChange={this.handlePriority}
+						  	className='group'
+						  >
+						    <ToggleButton className='priority' value={0}>0</ToggleButton>
+						    <ToggleButton className='priority' value={1}>1</ToggleButton>
+						    <ToggleButton className='priority' value={2}>2</ToggleButton>
+						    <ToggleButton className='priority' value={3}>3</ToggleButton>
+						  </ToggleButtonGroup>
+						</ButtonToolbar>
+
+						<ControlLabel>Due Date</ControlLabel>
+						<DatePicker
+							selected={this.state.displayDate}
+							onSelect={this.handleSelectedDate}
+					    onChange={this.handleDateChange}
+					    className='date-select'
+						/>
+					</div>
+
+					<div className='submit-form'>
+						<Button
+							className='submit-button'
+							type='submit'
+							onClick={this.handleSubmit}> 
+							PLACE ORDER
+						</Button>
+					</div>
 				</form>
 			</div>
 		)
